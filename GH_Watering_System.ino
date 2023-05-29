@@ -29,7 +29,7 @@
 #define         MPRLS_CLK                     A5
                                      
 #define         PUMP_TIMEOUT_TIME             300000                                 // We never run the pump for longer than this despite sensor readings 
-#define         RESEVOIR_FILL_TIMEOUT_TIME    60
+#define         RESEVOIR_FILL_TIMEOUT_TIME    120
 #define         PUMPING_PERIOD                86400000                               // 24 HOURS
 
 #define         PUMP_OFF                      0
@@ -60,7 +60,7 @@ void Turn_Pumps_Off();
 unsigned long Calculate_Next_Fill_Time(float B_V);
 void Turn_Pump_On(int Pump_Selection);
 
-int TARGET_FILL_VOLUME[5] = {500, 500, 100, -100, -100};                // Negative numbers skip
+int TARGET_FILL_VOLUME[5] = {188, 188, 188, 0, 0};                // 125 corresponds to 1 litre
 
 //---------------------------------------------------------------
 void setup() 
@@ -139,12 +139,15 @@ void loop()
     Pump_Selection++; 
   }
 
+  while(Pump_Selection <= 5 && TARGET_FILL_VOLUME[Pump_Selection] <= 0)  {
+    Pump_Selection++;
+  }
+
   if(Pump_Selection > 5)
   {
     Pump_Selection = 0;
     Pump_Toggle_Time = millis() + PUMPING_PERIOD;
   }  
-
 
   // -------  
   long Next_Display_Time = Display_Time - millis();
