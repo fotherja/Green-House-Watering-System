@@ -54,13 +54,13 @@
 Adafruit_MPRLS  mpr = Adafruit_MPRLS(-1, -1);
 Average         Pressure_Filter(20);
 
-int Fill_Resevoir_Tank();
+int Fill_Resevoir_Tank(int Pump_Selection);
 int Read_Water_Level();
 void Turn_Pumps_Off();
 unsigned long Calculate_Next_Fill_Time(float B_V);
 void Turn_Pump_On(int Pump_Selection);
 
-int TARGET_FILL_VOLUME[5] = {188, 188, 188, 0, 0};                // 125 corresponds to 1 litre
+int TARGET_FILL_VOLUME[5] = {200, 200, 200, 0, 0};                // 125 corresponds to 1 litre (200)
 
 //---------------------------------------------------------------
 void setup() 
@@ -96,7 +96,7 @@ void setup()
 //---------------------------------------------------------------
 void loop() 
 {
-  static unsigned long    Pump_Toggle_Time        = millis(); // + PUMPING_PERIOD; 
+  static unsigned long    Pump_Toggle_Time        = millis() + PUMPING_PERIOD; 
   static unsigned long    Display_Time            = 0;
   static int              Pre_Pump_Water_Volume   = 0;
   static byte             Pump_Status             = PUMP_OFF;
@@ -109,7 +109,7 @@ void loop()
   {   
     if(Pump_Status == PUMP_OFF)                                                                           // If pump is currently off, turn it on for PUMP_TIMEOUT_TIME milliseconds
     {            
-      Pre_Pump_Water_Volume = Fill_Resevoir_Tank();
+      Pre_Pump_Water_Volume = Fill_Resevoir_Tank(Pump_Selection);
       Turn_Pump_On(Pump_Selection);
       Pump_Status = PUMP_RUNNING;
 
@@ -165,29 +165,33 @@ void loop()
 }
 
 //---------------------------------------------------------------
-int Fill_Resevoir_Tank()
+int Fill_Resevoir_Tank(int Pump_Selection)
 {
-  TURN_RESEVOIR_PUMP_ON;
-  Serial.println("Filling resevoir tank... Timeout in: ");
-  
-  int Counter = RESEVOIR_FILL_TIMEOUT_TIME;
-  while(FLOAT_SENSOR == DEACTIVATED)
+  if(Pump_Selection == 0)
   {
-    delay(1000);
+    TURN_RESEVOIR_PUMP_ON;
+    Serial.println("Filling resevoir tank... Timeout in: ");
     
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    Serial.println(Counter);
-
-    Counter--;
-    if(Counter == 0)
+    int Counter = RESEVOIR_FILL_TIMEOUT_TIME;
+    while(FLOAT_SENSOR == DEACTIVATED)
     {
-      //Fault(RESEVOIR_PUMP_TIMEOUT_FAULT);
-      break;
+      delay(1000);
+      
+      digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+      Serial.println(Counter);
+
+      Counter--;
+      if(Counter == 0)
+      {
+        //Fault(RESEVOIR_PUMP_TIMEOUT_FAULT);
+        break;
+      }
     }
+
+    Turn_Pumps_Off();
+    Serial.println("Resevoir should be full");
   }
 
-  Turn_Pumps_Off();
-  Serial.println("Resevoir should be full");
   delay(1000);                                                                  // Short delay to ensure no water flowing anymore
   
   int V;                                                                        // Read and take average of tank water volume
